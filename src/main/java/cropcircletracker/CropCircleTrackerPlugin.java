@@ -1,16 +1,20 @@
 package cropcircletracker;
 
-import com.google.inject.Provides;
+import java.time.temporal.ChronoUnit;
+import java.util.Map;
 import javax.inject.Inject;
+
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.ChatMessageType;
-import net.runelite.api.Client;
-import net.runelite.api.GameState;
-import net.runelite.api.events.GameStateChanged;
-import net.runelite.client.config.ConfigManager;
+import net.runelite.api.*;
+import net.runelite.api.coords.LocalPoint;
+import net.runelite.api.coords.WorldPoint;
+import net.runelite.api.events.GameObjectSpawned;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.task.Schedule;
+
+import static net.runelite.api.ObjectID.CENTRE_OF_CROP_CIRCLE;
 
 @Slf4j
 @PluginDescriptor(
@@ -18,36 +22,70 @@ import net.runelite.client.plugins.PluginDescriptor;
 )
 public class CropCircleTrackerPlugin extends Plugin
 {
+	private static final int CROP_CIRCLE_OBJECT = CENTRE_OF_CROP_CIRCLE;
+	private static final int POLLING_PERIOD_SECONDS = 30;
+	private static final Map<WorldPoint, CropCircle> MAPPING = CropCircle.mapping();
+
 	@Inject
 	private Client client;
 
-	@Inject
-	private CropCircleTrackerConfig config;
+	private CropCircle lastCropCircle = null;
 
-	@Override
-	protected void startUp() throws Exception
+	/* Send an HTTP POST request for a crop circle sighting. */
+	private void postSighting(CropCircle cropCircle, int world)
 	{
-		log.info("Example started!");
+		log.debug("Crop circle sighting on W" + world + ": " + cropCircle.getName());
 	}
 
-	@Override
-	protected void shutDown() throws Exception
+	/* Determine if a crop circle is visible on the given WorldPoint. */
+	private boolean cropCircleVisible(WorldPoint worldPoint)
 	{
-		log.info("Example stopped!");
+		boolean visible = false;
+		LocalPoint localPoint = LocalPoint.fromWorld(client, worldPoint);
+		if (localPoint != null) {
+			Tile[][][] tiles = client.getScene().getTiles();
+			Tile tile = tiles[worldPoint.getPlane()][localPoint.getSceneX()][localPoint.getSceneY()];
+			for (GameObject object : tile.getGameObjects())
+			{
+				if (object != null && object.getId() == CROP_CIRCLE_OBJECT)
+				{
+					visible = true;
+					break;
+				}
+			}
+		}
+		return visible;
 	}
 
-	@Subscribe
-	public void onGameStateChanged(GameStateChanged gameStateChanged)
+	/* Periodically check if the last seen crop circle is still visible. */
+	@Schedule(period = POLLING_PERIOD_SECONDS, unit = ChronoUnit.SECONDS, asynchronous = true)
+	public void poll()
 	{
-		if (gameStateChanged.getGameState() == GameState.LOGGED_IN)
+		if (lastCropCircle != null)
 		{
-			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Example says " + config.greeting(), null);
+			if (cropCircleVisible(lastCropCircle.getWorldPoint()))
+			{
+				postSighting(lastCropCircle, client.getWorld());
+			}
+			else
+			{
+				log.debug("Crop circle sighting removed: " + lastCropCircle.getName());
+				lastCropCircle = null;
+			}
 		}
 	}
 
-	@Provides
-	CropCircleTrackerConfig provideConfig(ConfigManager configManager)
+	@Subscribe
+	public void onGameObjectSpawned(GameObjectSpawned event)
 	{
-		return configManager.getConfig(CropCircleTrackerConfig.class);
+		if (event.getGameObject().getId() == CROP_CIRCLE_OBJECT)
+		{
+			CropCircle cropCircle = MAPPING.get(event.getTile().getWorldLocation());
+			if (cropCircle != null)
+			{
+				postSighting(cropCircle, client.getWorld());
+				lastCropCircle = cropCircle;
+			}
+		}
 	}
 }
