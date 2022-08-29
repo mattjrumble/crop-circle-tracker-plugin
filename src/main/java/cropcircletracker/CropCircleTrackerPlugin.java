@@ -5,7 +5,9 @@ import java.util.Map;
 import javax.inject.Inject;
 
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.*;
+import net.runelite.api.Client;
+import net.runelite.api.GameObject;
+import net.runelite.api.Tile;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.GameObjectSpawned;
@@ -17,9 +19,7 @@ import net.runelite.client.task.Schedule;
 import static net.runelite.api.ObjectID.CENTRE_OF_CROP_CIRCLE;
 
 @Slf4j
-@PluginDescriptor(
-	name = "Crop Circle Tracker"
-)
+@PluginDescriptor(name = "Crop Circle Tracker")
 public class CropCircleTrackerPlugin extends Plugin
 {
 	private static final int CROP_CIRCLE_OBJECT = CENTRE_OF_CROP_CIRCLE;
@@ -40,7 +40,6 @@ public class CropCircleTrackerPlugin extends Plugin
 	/* Determine if a crop circle is visible on the given WorldPoint. */
 	private boolean cropCircleVisible(WorldPoint worldPoint)
 	{
-		boolean visible = false;
 		LocalPoint localPoint = LocalPoint.fromWorld(client, worldPoint);
 		if (localPoint != null) {
 			Tile[][][] tiles = client.getScene().getTiles();
@@ -49,12 +48,11 @@ public class CropCircleTrackerPlugin extends Plugin
 			{
 				if (object != null && object.getId() == CROP_CIRCLE_OBJECT)
 				{
-					visible = true;
-					break;
+					return true;
 				}
 			}
 		}
-		return visible;
+		return false;
 	}
 
 	/* Periodically check if the last seen crop circle is still visible. */
