@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import java.io.IOException;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import javax.inject.Inject;
 
@@ -62,6 +63,7 @@ public class CropCircleTrackerPlugin extends Plugin
 			@Override
 			public void onFailure(Call call, IOException e)
 			{
+				likelihoods = null;
 				log.error("GET failed: {}", e.getMessage());
 			}
 			@Override
@@ -75,11 +77,13 @@ public class CropCircleTrackerPlugin extends Plugin
 					}
 					catch (IOException | JsonSyntaxException e)
 					{
+						likelihoods = null;
 						log.error("GET failed: {}", e.getMessage());
 					}
 				}
 				else
 				{
+					likelihoods = null;
 					log.error("GET unsuccessful");
 				}
 				response.close();
@@ -90,6 +94,13 @@ public class CropCircleTrackerPlugin extends Plugin
 	/* Send an HTTP POST request for a crop circle sighting. */
 	private void postSighting(CropCircle cropCircle, int world)
 	{
+		if (client.getWorld() != world)
+		{
+			// If the current world is not the given world, don't post anything. This protects against edge-cases
+			// where a crop circle is detected but then the player immediately hops world, which could cause a sighting
+			// to be posted using the location from the old world along with the newly-hopped-to world.
+			return;
+		}
 		Map<String, Object> data = new HashMap<>();
 		data.put("world", world);
 		data.put("location", cropCircle.getExternalId());
@@ -139,9 +150,10 @@ public class CropCircleTrackerPlugin extends Plugin
 	{
 		if (lastCropCircle != null)
 		{
+			int world = client.getWorld();
 			if (cropCircleVisible(lastCropCircle.getWorldPoint()))
 			{
-				postSighting(lastCropCircle, client.getWorld());
+				postSighting(lastCropCircle, world);
 			}
 			else
 			{
@@ -156,10 +168,11 @@ public class CropCircleTrackerPlugin extends Plugin
 	{
 		if (event.getGameObject().getId() == CROP_CIRCLE_OBJECT)
 		{
+			int world = client.getWorld();
 			CropCircle cropCircle = MAPPING.get(event.getTile().getWorldLocation());
 			if (cropCircle != null)
 			{
-				postSighting(cropCircle, client.getWorld());
+				postSighting(cropCircle, world);
 				lastCropCircle = cropCircle;
 			}
 		}
@@ -168,8 +181,28 @@ public class CropCircleTrackerPlugin extends Plugin
 	@Schedule(period = 5, unit = ChronoUnit.SECONDS, asynchronous = false)
 	public void printLikelihoodsMessage()
 	{
-		if (likelihoods != null) {
-			client.addChatMessage(ChatMessageType.CONSOLE, "", "Likelihoods: " + likelihoods.toString(), "");
+		if (likelihoods == null)
+		{
+			client.addChatMessage(ChatMessageType.CONSOLE, "", "No likelihoods yet", "");
+		}
+		else
+		{
+			// Convert all likelihoods to integer percentages so that they fit better in a chat message.
+			JsonObject likelihoodsCopy = likelihoods.deepCopy();
+			Iterator<String> keys = likelihoodsCopy.keySet().iterator();
+			while (keys.hasNext())
+			{
+				String key = keys.next();
+				JsonObject innerLikelihoods = likelihoodsCopy.get(key).getAsJsonObject();
+				Iterator<String> innerKeys = innerLikelihoods.keySet().iterator();
+				while (innerKeys.hasNext())
+				{
+					String innerKey = innerKeys.next();
+					float innerValue = innerLikelihoods.get(innerKey).getAsFloat();
+					innerLikelihoods.addProperty(innerKey, Math.round(innerValue * 100) + "%");
+				}
+			}
+			client.addChatMessage(ChatMessageType.CONSOLE, "", "Likelihoods: " + likelihoodsCopy.toString(), "");
 		}
 	}
 }
