@@ -8,7 +8,10 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.inject.Inject;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameObject;
 import net.runelite.api.Tile;
@@ -28,7 +31,9 @@ import static net.runelite.api.ObjectID.CENTRE_OF_CROP_CIRCLE;
 public class CropCircleTrackerPlugin extends Plugin
 {
 	private static final int CROP_CIRCLE_OBJECT = CENTRE_OF_CROP_CIRCLE;
-	private static final int POLLING_PERIOD_SECONDS = 30;
+	private static final int GET_LIKELIHOODS_POLLING_PERIOD_SECONDS = 10;
+	private static final int CROP_CIRCLE_POLLING_PERIOD_SECONDS = 30;
+	private static final String GET_URL = "http://127.0.0.1:8000/";
 	private static final String POST_URL = "http://127.0.0.1:8000/";
 	private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
 	private static final Map<WorldPoint, CropCircle> MAPPING = CropCircle.mapping();
@@ -44,13 +49,50 @@ public class CropCircleTrackerPlugin extends Plugin
 
 	private CropCircle lastCropCircle = null;
 
+	private JsonObject likelihoods = null;
+
+	/* Send an HTTP GET request for crop circle likelihoods across worlds. */
+	@Schedule(period = GET_LIKELIHOODS_POLLING_PERIOD_SECONDS, unit = ChronoUnit.SECONDS, asynchronous = true)
+	public void getLikelihoods()
+	{
+		log.debug("Getting likelihoods");
+		Request request = new Request.Builder().url(GET_URL).get().build();
+		okHttpClient.newCall(request).enqueue(new Callback()
+		{
+			@Override
+			public void onFailure(Call call, IOException e)
+			{
+				log.error("GET failed: {}", e.getMessage());
+			}
+			@Override
+			public void onResponse(Call call, Response response)
+			{
+				if (response.isSuccessful())
+				{
+					try
+					{
+						likelihoods = gson.fromJson(response.body().string(), JsonObject.class);
+					}
+					catch (IOException | JsonSyntaxException e)
+					{
+						log.error("GET failed: {}", e.getMessage());
+					}
+				}
+				else
+				{
+					log.error("GET unsuccessful");
+				}
+				response.close();
+			}
+		});
+	}
+
 	/* Send an HTTP POST request for a crop circle sighting. */
 	private void postSighting(CropCircle cropCircle, int world)
 	{
 		Map<String, Object> data = new HashMap<>();
 		data.put("world", world);
 		data.put("location", cropCircle.getExternalId());
-		data.put("datetime", "...");
 		String json = gson.toJson(data);
 		log.debug("Posting sighting: {}", json);
 		Request request = new Request.Builder().url(POST_URL).post(RequestBody.create(JSON, json)).build();
@@ -59,11 +101,15 @@ public class CropCircleTrackerPlugin extends Plugin
 			@Override
 			public void onFailure(Call call, IOException e)
 			{
-				log.debug("Post failed: {}", e.getMessage());
+				log.error("POST failed: {}", e.getMessage());
 			}
 			@Override
 			public void onResponse(Call call, Response response)
 			{
+				if (!response.isSuccessful())
+				{
+					log.error("POST unsuccessful");
+				}
 				response.close();
 			}
 		});
@@ -88,7 +134,7 @@ public class CropCircleTrackerPlugin extends Plugin
 	}
 
 	/* Periodically check if the last seen crop circle is still visible. */
-	@Schedule(period = POLLING_PERIOD_SECONDS, unit = ChronoUnit.SECONDS, asynchronous = true)
+	@Schedule(period = CROP_CIRCLE_POLLING_PERIOD_SECONDS, unit = ChronoUnit.SECONDS, asynchronous = true)
 	public void poll()
 	{
 		if (lastCropCircle != null)
@@ -116,6 +162,14 @@ public class CropCircleTrackerPlugin extends Plugin
 				postSighting(cropCircle, client.getWorld());
 				lastCropCircle = cropCircle;
 			}
+		}
+	}
+
+	@Schedule(period = 5, unit = ChronoUnit.SECONDS, asynchronous = false)
+	public void printLikelihoodsMessage()
+	{
+		if (likelihoods != null) {
+			client.addChatMessage(ChatMessageType.CONSOLE, "", "Likelihoods: " + likelihoods.toString(), "");
 		}
 	}
 }
