@@ -2,6 +2,7 @@ package cropcircletracker;
 
 import com.google.gson.Gson;
 
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
@@ -23,6 +24,9 @@ import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.task.Schedule;
+import net.runelite.client.ui.ClientToolbar;
+import net.runelite.client.ui.NavigationButton;
+import net.runelite.client.util.ImageUtil;
 import okhttp3.*;
 
 import static net.runelite.api.ObjectID.CENTRE_OF_CROP_CIRCLE;
@@ -43,14 +47,33 @@ public class CropCircleTrackerPlugin extends Plugin
 	private Client client;
 
 	@Inject
+	private ClientToolbar clientToolbar;
+
+	@Inject
 	private OkHttpClient okHttpClient;
 
 	@Inject
 	private Gson gson;
 
+	private CropCircleTrackerPanel panel;
+
 	private CropCircle lastCropCircle = null;
 
 	private JsonObject likelihoods = null;
+
+	@Override
+	protected void startUp()
+	{
+		panel = injector.getInstance(CropCircleTrackerPanel.class);
+		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "/icon.png");
+		NavigationButton navButton = NavigationButton.builder()
+			.tooltip("Crop Circle Tracker")
+			.icon(icon)
+			.priority(7)
+			.panel(panel)
+			.build();
+		clientToolbar.addNavigation(navButton);
+	}
 
 	/* Send an HTTP GET request for crop circle likelihoods across worlds. */
 	@Schedule(period = GET_LIKELIHOODS_POLLING_PERIOD_SECONDS, unit = ChronoUnit.SECONDS, asynchronous = true)
