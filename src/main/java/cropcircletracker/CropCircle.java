@@ -30,7 +30,7 @@ public enum CropCircle
     MISCELLANIA(17, "Miscellania", new WorldPoint(2538, 3845, 0));
 
     @Getter
-    private final int externalId;
+    private final int index;
 
     @Getter
     private final String name;
@@ -41,9 +41,22 @@ public enum CropCircle
     public static Map<WorldPoint, CropCircle> mapping()
     {
         Map<WorldPoint, CropCircle> mapping = new HashMap<>();
-        for (CropCircle cropCircle: CropCircle.values()) {
+        for (CropCircle cropCircle: CropCircle.values())
+        {
             mapping.put(cropCircle.getWorldPoint(), cropCircle);
         }
         return mapping;
+    }
+
+    public static CropCircle fromName(String name)
+    {
+        for (CropCircle cropCircle: CropCircle.values())
+        {
+            if (cropCircle.getName().equals(name))
+            {
+                return cropCircle;
+            }
+        }
+        return null;
     }
 }

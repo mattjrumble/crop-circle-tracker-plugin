@@ -6,14 +6,13 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import javax.inject.Inject;
+import javax.swing.*;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameObject;
 import net.runelite.api.Tile;
@@ -36,8 +35,9 @@ import static net.runelite.api.ObjectID.CENTRE_OF_CROP_CIRCLE;
 public class CropCircleTrackerPlugin extends Plugin
 {
 	private static final int CROP_CIRCLE_OBJECT = CENTRE_OF_CROP_CIRCLE;
-	private static final int GET_LIKELIHOODS_POLLING_PERIOD_SECONDS = 10;
-	private static final int CROP_CIRCLE_POLLING_PERIOD_SECONDS = 30;
+	private static final int GET_LIKELIHOODS_PERIOD_SECONDS = 10;
+	private static final int CROP_CIRCLE_RECHECK_PERIOD_SECONDS = 10;
+	private static final int PANEL_REFRESH_PERIOD_SECONDS = 1;
 	private static final String GET_URL = "http://127.0.0.1:8000/";
 	private static final String POST_URL = "http://127.0.0.1:8000/";
 	private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
@@ -59,7 +59,8 @@ public class CropCircleTrackerPlugin extends Plugin
 
 	private CropCircle lastCropCircle = null;
 
-	private JsonObject likelihoods = null;
+	/* A mapping of worlds to likelihoods. This property is periodically updated. */
+	public JsonObject likelihoods = null;
 
 	@Override
 	protected void startUp()
@@ -75,9 +76,9 @@ public class CropCircleTrackerPlugin extends Plugin
 		clientToolbar.addNavigation(navButton);
 	}
 
-	/* Send an HTTP GET request for crop circle likelihoods across worlds. */
-	@Schedule(period = GET_LIKELIHOODS_POLLING_PERIOD_SECONDS, unit = ChronoUnit.SECONDS, asynchronous = true)
-	public void getLikelihoods()
+	/* Send an HTTP GET request for crop circle likelihoods per world and update the likelihoods property. */
+	@Schedule(period = GET_LIKELIHOODS_PERIOD_SECONDS, unit = ChronoUnit.SECONDS, asynchronous = true)
+	public void updateLikelihoods()
 	{
 		log.debug("Getting likelihoods");
 		Request request = new Request.Builder().url(GET_URL).get().build();
@@ -126,7 +127,7 @@ public class CropCircleTrackerPlugin extends Plugin
 		}
 		Map<String, Object> data = new HashMap<>();
 		data.put("world", world);
-		data.put("location", cropCircle.getExternalId());
+		data.put("location", cropCircle.getIndex());
 		String json = gson.toJson(data);
 		log.debug("Posting sighting: {}", json);
 		Request request = new Request.Builder().url(POST_URL).post(RequestBody.create(JSON, json)).build();
@@ -168,7 +169,7 @@ public class CropCircleTrackerPlugin extends Plugin
 	}
 
 	/* Periodically check if the last seen crop circle is still visible. */
-	@Schedule(period = CROP_CIRCLE_POLLING_PERIOD_SECONDS, unit = ChronoUnit.SECONDS, asynchronous = true)
+	@Schedule(period = CROP_CIRCLE_RECHECK_PERIOD_SECONDS, unit = ChronoUnit.SECONDS, asynchronous = true)
 	public void poll()
 	{
 		if (lastCropCircle != null)
@@ -201,31 +202,12 @@ public class CropCircleTrackerPlugin extends Plugin
 		}
 	}
 
-	@Schedule(period = 5, unit = ChronoUnit.SECONDS, asynchronous = false)
-	public void printLikelihoodsMessage()
+	@Schedule(period = PANEL_REFRESH_PERIOD_SECONDS, unit = ChronoUnit.SECONDS, asynchronous = true)
+	public void updatePanel()
 	{
-		if (likelihoods == null)
+		if (panel.open)
 		{
-			client.addChatMessage(ChatMessageType.CONSOLE, "", "No likelihoods yet", "");
-		}
-		else
-		{
-			// Convert all likelihoods to integer percentages so that they fit better in a chat message.
-			JsonObject likelihoodsCopy = likelihoods.deepCopy();
-			Iterator<String> keys = likelihoodsCopy.keySet().iterator();
-			while (keys.hasNext())
-			{
-				String key = keys.next();
-				JsonObject innerLikelihoods = likelihoodsCopy.get(key).getAsJsonObject();
-				Iterator<String> innerKeys = innerLikelihoods.keySet().iterator();
-				while (innerKeys.hasNext())
-				{
-					String innerKey = innerKeys.next();
-					float innerValue = innerLikelihoods.get(innerKey).getAsFloat();
-					innerLikelihoods.addProperty(innerKey, Math.round(innerValue * 100) + "%");
-				}
-			}
-			client.addChatMessage(ChatMessageType.CONSOLE, "", "Likelihoods: " + likelihoodsCopy.toString(), "");
+			SwingUtilities.invokeLater(() -> panel.updateTable());
 		}
 	}
 }
