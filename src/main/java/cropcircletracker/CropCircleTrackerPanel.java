@@ -2,6 +2,7 @@ package cropcircletracker;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.sun.jna.platform.unix.solaris.LibKstat;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
@@ -11,9 +12,8 @@ import javax.inject.Inject;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
@@ -23,6 +23,11 @@ public class CropCircleTrackerPanel extends PluginPanel
     private static final Color TABLE_HEADING_COLOR = ColorScheme.SCROLL_TRACK_COLOR;
     private static final Color TABLE_ROW_COLOR_1 = ColorScheme.DARK_GRAY_COLOR;
     private static final Color TABLE_ROW_COLOR_2 = ColorScheme.DARKER_GRAY_COLOR;
+    private static final Color LIKELIHOOD_COLOR_1 = new Color(0, 255, 0);
+    private static final Color LIKELIHOOD_COLOR_2 = new Color(128, 255, 0);
+    private static final Color LIKELIHOOD_COLOR_3 = new Color(255, 255, 0);
+    private static final Color LIKELIHOOD_COLOR_4 = new Color(255, 128, 0);
+    private static final Color LIKELIHOOD_COLOR_5 = new Color(255, 0, 0);
 
     private final CropCircleTrackerPlugin plugin;
 
@@ -103,25 +108,77 @@ public class CropCircleTrackerPanel extends PluginPanel
                 return;
             }
             int selectedLocation = cropCircle.getIndex();
-            table.removeAll();
-            addTableHeadings();
-            AtomicInteger rowIndex = new AtomicInteger();
+
+            // Get worlds and likelihoods for the selected location.
+            ArrayList<List<Object>> worldLikelihoodPairs = new ArrayList<>();
             plugin.likelihoods.keySet().forEach(world ->
             {
                 JsonObject likelihoods = plugin.likelihoods.get(world).getAsJsonObject();
-                JsonElement likelihood = likelihoods.get(String.valueOf(selectedLocation));
-                if (likelihood != null) {
-                    Color rowColor = rowIndex.get() % 2 == 0 ? TABLE_ROW_COLOR_1 : TABLE_ROW_COLOR_2;
-                    rowIndex.getAndIncrement();
-                    String likelihoodString = Math.round(likelihood.getAsDouble() * 100) + "%";
-                    Color likelihoodColor = new Color(0, 255, 0);
-                    table.add(new CropCircleTrackerTableRow(
-                        world, likelihoodString, "-", likelihoodColor , null, null, rowColor
-                    ));
+                JsonElement likelihoodJsonElement = likelihoods.get(String.valueOf(selectedLocation));
+                if (likelihoodJsonElement != null) {
+                    double likelihood = likelihoodJsonElement.getAsDouble();
+                    List<Object> pair = new ArrayList<>();
+                    pair.add(world);
+                    pair.add(likelihood);
+                    worldLikelihoodPairs.add(pair);
                 }
             });
+
+            // TODO: Sort by likelihood
+
+            // Repopulate table.
+            table.removeAll();
+            addTableHeadings();
+            AtomicInteger rowIndex = new AtomicInteger();
+            for (List<Object> pair: worldLikelihoodPairs)
+            {
+                String world = (String) pair.get(0);
+                double likelihood = (double) pair.get(1);
+                Color rowColor = rowIndex.get() % 2 == 0 ? TABLE_ROW_COLOR_1 : TABLE_ROW_COLOR_2;
+                rowIndex.getAndIncrement();
+                table.add(new CropCircleTrackerTableRow(
+                    world, getLikelihoodString(likelihood), "-",
+                    null, getLikelihoodColor(likelihood), null, rowColor
+                ));
+            };
             table.revalidate();
             table.repaint();
+        }
+    }
+
+    private String getLikelihoodString(double likelihood)
+    {
+        if (likelihood >= 0.95)
+        {
+            return "95%+";
+        }
+        else
+        {
+            return Math.round(likelihood * 100) + "%";
+        }
+    }
+
+    private Color getLikelihoodColor(double likelihood)
+    {
+        if (likelihood >= 0.8)
+        {
+            return LIKELIHOOD_COLOR_1;
+        }
+        else if (likelihood >= 0.6)
+        {
+            return LIKELIHOOD_COLOR_2;
+        }
+        else if (likelihood >= 0.4)
+        {
+            return LIKELIHOOD_COLOR_3;
+        }
+        else if (likelihood >= 0.2)
+        {
+            return LIKELIHOOD_COLOR_4;
+        }
+        else
+        {
+            return LIKELIHOOD_COLOR_5;
         }
     }
 
