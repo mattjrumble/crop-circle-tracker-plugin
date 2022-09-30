@@ -15,10 +15,12 @@ import com.google.gson.JsonSyntaxException;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.GameObject;
+import net.runelite.api.GameState;
 import net.runelite.api.Tile;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.GameObjectSpawned;
+import net.runelite.api.events.GameStateChanged;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
@@ -62,8 +64,10 @@ public class CropCircleTrackerPlugin extends Plugin
 	/* A mapping of worlds to likelihoods. This property is periodically updated. */
 	public JsonObject likelihoods = null;
 
+	private int currentWorld = -1;
+
 	@Override
-	protected void startUp()
+	public void startUp()
 	{
 		panel = injector.getInstance(CropCircleTrackerPanel.class);
 		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "/icon.png");
@@ -74,6 +78,16 @@ public class CropCircleTrackerPlugin extends Plugin
 			.panel(panel)
 			.build();
 		clientToolbar.addNavigation(navButton);
+	}
+
+	@Subscribe
+	public void onGameStateChanged(GameStateChanged event)
+	{
+		if (event.getGameState() == GameState.LOGGED_IN)
+		{
+			lastCropCircle = null;
+			currentWorld = client.getWorld();
+		}
 	}
 
 	/* Send an HTTP GET request for crop circle likelihoods per world and update the likelihoods property. */
@@ -116,15 +130,29 @@ public class CropCircleTrackerPlugin extends Plugin
 	}
 
 	/* Send an HTTP POST request for a crop circle sighting. */
-	private void postSighting(CropCircle cropCircle, int world)
+	private void postSighting(CropCircle cropCircle)
 	{
-		if (client.getWorld() != world)
+		int world = currentWorld;
+
+		// Check we actually have a current world recorded.
+		if (world == -1)
 		{
-			// If the current world is not the given world, don't post anything. This protects against edge-cases
-			// where a crop circle is detected but then the player immediately hops world, which could cause a sighting
-			// to be posted using the location from the old world along with the newly-hopped-to world.
 			return;
 		}
+
+		// Check that the crop circle is still visible.
+		if (!cropCircleVisible(cropCircle.getWorldPoint()))
+		{
+			lastCropCircle = null;
+			return;
+		}
+
+		// Check that the world has not changed since determining the crop circle is still visible.
+		if (world != currentWorld)
+		{
+			return;
+		}
+
 		Map<String, Object> data = new HashMap<>();
 		data.put("world", world);
 		data.put("location", cropCircle.getIndex());
@@ -148,6 +176,7 @@ public class CropCircleTrackerPlugin extends Plugin
 				response.close();
 			}
 		});
+		lastCropCircle = cropCircle;
 	}
 
 	/* Determine if a crop circle is visible on the given WorldPoint. */
@@ -174,16 +203,7 @@ public class CropCircleTrackerPlugin extends Plugin
 	{
 		if (lastCropCircle != null)
 		{
-			int world = client.getWorld();
-			if (cropCircleVisible(lastCropCircle.getWorldPoint()))
-			{
-				postSighting(lastCropCircle, world);
-			}
-			else
-			{
-				log.debug("Sighting removed: {}", lastCropCircle.getName());
-				lastCropCircle = null;
-			}
+			postSighting(lastCropCircle);
 		}
 	}
 
@@ -192,12 +212,10 @@ public class CropCircleTrackerPlugin extends Plugin
 	{
 		if (event.getGameObject().getId() == CROP_CIRCLE_OBJECT)
 		{
-			int world = client.getWorld();
 			CropCircle cropCircle = MAPPING.get(event.getTile().getWorldLocation());
 			if (cropCircle != null)
 			{
-				postSighting(cropCircle, world);
-				lastCropCircle = cropCircle;
+				postSighting(cropCircle);
 			}
 		}
 	}
