@@ -152,9 +152,13 @@ public class CropCircleTrackerPanel extends PluginPanel
 
     private String getLikelihoodString(double likelihood)
     {
-        if (likelihood >= 0.95)
+        if (likelihood >= 0.945)
         {
             return "95%+";
+        }
+        else if (likelihood <= 0.1)
+        {
+            return "1%";
         }
         else
         {
