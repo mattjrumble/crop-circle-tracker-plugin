@@ -110,7 +110,7 @@ public class CropCircleTrackerPanel extends PluginPanel
             int selectedLocation = cropCircle.getIndex();
 
             // Get worlds and likelihoods for the selected location.
-            ArrayList<List<Object>> worldLikelihoodPairs = new ArrayList<>();
+            List<List<Object>> worldLikelihoodPairs = new ArrayList<>();
             plugin.likelihoods.keySet().forEach(world ->
             {
                 JsonObject likelihoods = plugin.likelihoods.get(world).getAsJsonObject();
@@ -124,7 +124,11 @@ public class CropCircleTrackerPanel extends PluginPanel
                 }
             });
 
-            // TODO: Sort by likelihood
+            Collections.sort(worldLikelihoodPairs, (a, b) -> {
+                double likelihoodA = (double) a.get(1);
+                double likelihoodB = (double) b.get(1);
+                return likelihoodA < likelihoodB ? 1 : -1;
+            });
 
             // Repopulate table.
             table.removeAll();
