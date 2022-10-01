@@ -86,7 +86,7 @@ public class CropCircleTrackerPlugin extends Plugin
 			.panel(panel)
 			.build();
 		clientToolbar.addNavigation(navButton);
-		getWorldMapping();
+		updateWorldMapping();
 	}
 
 	@Subscribe
@@ -103,43 +103,47 @@ public class CropCircleTrackerPlugin extends Plugin
 	@Schedule(period = GET_LIKELIHOODS_PERIOD_SECONDS, unit = ChronoUnit.SECONDS, asynchronous = true)
 	public void updateLikelihoods()
 	{
-		log.debug("Getting likelihoods");
-		Request request = new Request.Builder().url(GET_URL).get().build();
-		okHttpClient.newCall(request).enqueue(new Callback()
+		// Don't make constant GET requests unless the panel is open.
+		if (panel.open)
 		{
-			@Override
-			public void onFailure(Call call, IOException e)
+			log.debug("Getting likelihoods");
+			Request request = new Request.Builder().url(GET_URL).get().build();
+			okHttpClient.newCall(request).enqueue(new Callback()
 			{
-				likelihoods = null;
-				log.error("GET failed: {}", e.getMessage());
-			}
-			@Override
-			public void onResponse(Call call, Response response)
-			{
-				if (response.isSuccessful())
-				{
-					try
-					{
-						likelihoods = gson.fromJson(response.body().string(), JsonObject.class);
-					}
-					catch (IOException | JsonSyntaxException e)
-					{
-						likelihoods = null;
-						log.error("GET failed: {}", e.getMessage());
-					}
-				}
-				else
+				@Override
+				public void onFailure(Call call, IOException e)
 				{
 					likelihoods = null;
-					log.error("GET unsuccessful");
+					log.error("GET failed: {}", e.getMessage());
 				}
-				response.close();
-			}
-		});
+				@Override
+				public void onResponse(Call call, Response response)
+				{
+					if (response.isSuccessful())
+					{
+						try
+						{
+							likelihoods = gson.fromJson(response.body().string(), JsonObject.class);
+						}
+						catch (IOException | JsonSyntaxException e)
+						{
+							likelihoods = null;
+							log.error("GET failed: {}", e.getMessage());
+						}
+					}
+					else
+					{
+						likelihoods = null;
+						log.error("GET unsuccessful");
+					}
+					response.close();
+				}
+			});
+		}
 	}
 
 	/* Store a mapping of world ID to world. */
-	private void getWorldMapping()
+	private void updateWorldMapping()
 	{
 		WorldResult worldResult = worldService.getWorlds();
 		if (worldResult != null)

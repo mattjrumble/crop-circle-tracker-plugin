@@ -122,6 +122,8 @@ public class CropCircleTrackerPanel extends PluginPanel
 
     public void onActivate()
     {
+        // Clear likelihoods so that we always get fresh sightings when opening the panel.
+        plugin.likelihoods = null;
         open = true;
         updateTable();
     }
@@ -129,6 +131,7 @@ public class CropCircleTrackerPanel extends PluginPanel
     public void onDeactivate()
     {
         open = false;
+        table.clear();
     }
 
     /* Convenience method for returning a GridBagConstraints object with some common values. */

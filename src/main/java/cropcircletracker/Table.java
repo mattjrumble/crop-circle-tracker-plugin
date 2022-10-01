@@ -69,6 +69,13 @@ public class Table extends JPanel {
         repaint();
     }
 
+    public void clear()
+    {
+        removeAll();
+        revalidate();
+        repaint();
+    }
+
     /*
     Decide if we should display sightings for the given world. Don't bother displaying sightings for "weird" world
     types since these are unlikely to be useful for anyone.
