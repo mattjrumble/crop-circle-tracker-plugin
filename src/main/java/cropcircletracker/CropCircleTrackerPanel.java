@@ -31,10 +31,15 @@ public class CropCircleTrackerPanel extends PluginPanel
     private static final Color LIKELIHOOD_COLOR_5 = new Color(255, 0, 0);
     private static final Color DANGEROUS_WORLD_TYPE_COLOR = new Color(255, 0, 0);
     private static final List<WorldType> worldTypesToDisplay = Arrays.asList(
-        WorldType.SKILL_TOTAL, WorldType.HIGH_RISK, WorldType.PVP, WorldType.MEMBERS, WorldType.LAST_MAN_STANDING
+        WorldType.SKILL_TOTAL,
+        WorldType.HIGH_RISK,
+        WorldType.PVP,
+        WorldType.MEMBERS,
+        WorldType.LAST_MAN_STANDING
     );
     private static final List<WorldType> dangerousWorldTypes = Arrays.asList(
-        WorldType.HIGH_RISK, WorldType.PVP
+        WorldType.HIGH_RISK,
+        WorldType.PVP
     );
 
     private final CropCircleTrackerPlugin plugin;
