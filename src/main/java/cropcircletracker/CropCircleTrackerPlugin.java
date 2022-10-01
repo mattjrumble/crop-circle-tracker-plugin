@@ -128,7 +128,6 @@ public class CropCircleTrackerPlugin extends Plugin
 						catch (IOException | JsonSyntaxException e)
 						{
 							log.error("GET failed: {}", e.getMessage());
-							SwingUtilities.invokeLater(() -> panel.displayError("Server error"));
 						}
 					}
 					else
@@ -160,9 +159,17 @@ public class CropCircleTrackerPlugin extends Plugin
 	{
 		int world = currentWorld;
 
+		// Check we're actually logged in.
+		if (client.getGameState() != GameState.LOGGED_IN)
+		{
+			lastCropCircle = null;
+			return;
+		}
+
 		// Check we actually have a current world recorded.
 		if (world == -1)
 		{
+			lastCropCircle = null;
 			return;
 		}
 
@@ -176,6 +183,7 @@ public class CropCircleTrackerPlugin extends Plugin
 		// Check that the world has not changed since determining the crop circle is still visible.
 		if (world != currentWorld)
 		{
+			lastCropCircle = null;
 			return;
 		}
 
