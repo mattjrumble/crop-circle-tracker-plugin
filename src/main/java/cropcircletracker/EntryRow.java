@@ -7,7 +7,10 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-class TableRow extends JPanel
+/*
+A component for displaying an entry in the panel table (i.e. for displaying the world/likelihood/world type).
+*/
+class EntryRow extends JPanel
 {
 	private final static int COLUMN_1_WIDTH = 50;
 	private final static int COLUMN_2_WIDTH = 50;
@@ -16,7 +19,7 @@ class TableRow extends JPanel
 
 	private Color lastBackground;
 
-	TableRow(
+	EntryRow(
 			String column1, String column2, String column3,
 			Color textColor1, Color textColor2, Color textColor3, Color backgroundColor
 	)
@@ -36,7 +39,7 @@ class TableRow extends JPanel
 			@Override
 			public void mouseEntered(MouseEvent mouseEvent)
 			{
-				TableRow.this.lastBackground = getBackground();
+				EntryRow.this.lastBackground = getBackground();
 				setBackground(getBackground().brighter());
 			}
 

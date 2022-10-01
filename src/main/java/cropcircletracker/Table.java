@@ -38,31 +38,48 @@ public class Table extends JPanel {
         super();
         this.plugin = plugin;
         setLayout(new GridLayout(0, 1));
-        addHeadings();
     }
 
-    private void addHeadings()
+    private void addHeadingRow()
     {
-        add(new TableRow("World", "Likelihood", "World Type", null, null, null, HEADING_COLOR));
+        add(new EntryRow("World", "Likelihood", "World Type", null, null, null, HEADING_COLOR));
+    }
+
+    private void addMessageRow(String message)
+    {
+        add(new MessageRow(message, ROW_COLOR_1));
+    }
+
+    private void addEntryRow(int world, double likelihood, Color rowColor)
+    {
+        add(new EntryRow(
+                String.valueOf(world), getLikelihoodString(likelihood), getWorldTypeString(world),
+                null, getLikelihoodColor(likelihood), getWorldTypeColor(world), rowColor
+        ));
     }
 
     public void update(List<List<Object>> worldLikelihoodPairs)
     {
         removeAll();
-        addHeadings();
+        addHeadingRow();
+
+        // Sort sightings by likelihood.
+        Collections.sort(worldLikelihoodPairs, (a, b) -> {
+            double likelihoodA = (double) a.get(1);
+            double likelihoodB = (double) b.get(1);
+            return likelihoodA < likelihoodB ? 1 : -1;
+        });
+
         AtomicInteger rowIndex = new AtomicInteger();
         for (List<Object> pair: worldLikelihoodPairs)
         {
-            String world = (String) pair.get(0);
+            int world = Integer.parseInt((String) pair.get(0));
             double likelihood = (double) pair.get(1);
-            if (shouldDisplayWorld(Integer.parseInt(world)))
+            if (shouldDisplayWorld(world))
             {
                 Color rowColor = rowIndex.get() % 2 == 0 ? ROW_COLOR_1 : ROW_COLOR_2;
                 rowIndex.getAndIncrement();
-                add(new TableRow(
-                        world, getLikelihoodString(likelihood), getWorldTypeString(Integer.parseInt(world)),
-                        null, getLikelihoodColor(likelihood), getWorldTypeColor(Integer.parseInt(world)), rowColor
-                ));
+                addEntryRow(world, likelihood, rowColor);
             }
         };
         revalidate();
@@ -72,6 +89,15 @@ public class Table extends JPanel {
     public void clear()
     {
         removeAll();
+        addMessageRow("Loading...");
+        revalidate();
+        repaint();
+    }
+
+    public void displayError(String errorMessage)
+    {
+        removeAll();
+        addMessageRow(errorMessage);
         revalidate();
         repaint();
     }

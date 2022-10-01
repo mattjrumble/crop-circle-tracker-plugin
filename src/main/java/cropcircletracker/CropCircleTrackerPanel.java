@@ -117,21 +117,26 @@ public class CropCircleTrackerPanel extends PluginPanel
                 }
             });
 
-            // Sort sightings by likelihood.
-            Collections.sort(worldLikelihoodPairs, (a, b) -> {
-                double likelihoodA = (double) a.get(1);
-                double likelihoodB = (double) b.get(1);
-                return likelihoodA < likelihoodB ? 1 : -1;
-            });
-
             // Repopulate table.
             table.update(worldLikelihoodPairs);
         }
     }
 
+    public void clearTable()
+    {
+        likelihoods = null;
+        table.clear();
+    }
+
+    public void displayError(String errorMessage)
+    {
+        likelihoods = null;
+        table.displayError(errorMessage);
+    }
+
     public void onActivate()
     {
-        table.clear();
+        clearTable();
         open = true;
         plugin.getLikelihoods();
     }
