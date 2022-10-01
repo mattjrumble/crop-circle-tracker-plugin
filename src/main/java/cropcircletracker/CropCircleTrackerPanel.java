@@ -24,6 +24,9 @@ public class CropCircleTrackerPanel extends PluginPanel
     /* Keep track of whether the panel is open or not so that we don't redraw things unnecessarily. */
     public boolean open = false;
 
+    /* A mapping of worlds to likelihoods. */
+    public JsonObject likelihoods = null;
+
     private JComboBox<String> locationDropdownMenu;
 
     private Table table;
@@ -81,13 +84,18 @@ public class CropCircleTrackerPanel extends PluginPanel
         add(table, constraints);
     }
 
-    /* Repopulate the table based on current likelihoods and the selected location from the dropdown menu. */
+    /*
+    Repopulate the table based on the given mapping of worlds to likelihoods, and the selected location from the
+    dropdown menu.
+    */
     public void updateTable()
     {
-        if (plugin.likelihoods != null) {
+        if (this.likelihoods != null)
+        {
             String selectedLocationName = String.valueOf(locationDropdownMenu.getSelectedItem());
             CropCircle cropCircle = CropCircle.fromName(selectedLocationName);
-            if (cropCircle == null) {
+            if (cropCircle == null)
+            {
                 log.error("Invalid location selected");
                 return;
             }
@@ -95,11 +103,12 @@ public class CropCircleTrackerPanel extends PluginPanel
 
             // Get worlds and likelihoods for the selected location.
             List<List<Object>> worldLikelihoodPairs = new ArrayList<>();
-            plugin.likelihoods.keySet().forEach(world ->
+            this.likelihoods.keySet().forEach(world ->
             {
-                JsonObject likelihoods = plugin.likelihoods.get(world).getAsJsonObject();
-                JsonElement likelihoodJsonElement = likelihoods.get(String.valueOf(selectedLocation));
-                if (likelihoodJsonElement != null) {
+                JsonObject likelihoodsForWorld = this.likelihoods.get(world).getAsJsonObject();
+                JsonElement likelihoodJsonElement = likelihoodsForWorld.get(String.valueOf(selectedLocation));
+                if (likelihoodJsonElement != null)
+                {
                     double likelihood = likelihoodJsonElement.getAsDouble();
                     List<Object> pair = new ArrayList<>();
                     pair.add(world);
@@ -122,16 +131,14 @@ public class CropCircleTrackerPanel extends PluginPanel
 
     public void onActivate()
     {
-        // Clear likelihoods so that we always get fresh sightings when opening the panel.
-        plugin.likelihoods = null;
+        table.clear();
         open = true;
-        updateTable();
+        plugin.getLikelihoods();
     }
 
     public void onDeactivate()
     {
         open = false;
-        table.clear();
     }
 
     /* Convenience method for returning a GridBagConstraints object with some common values. */

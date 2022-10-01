@@ -69,9 +69,6 @@ public class CropCircleTrackerPlugin extends Plugin
 
 	private CropCircle lastCropCircle = null;
 
-	/* A mapping of worlds to likelihoods. This property is periodically updated. */
-	public JsonObject likelihoods = null;
-
 	private int currentWorld = -1;
 
 	@Override
@@ -86,7 +83,7 @@ public class CropCircleTrackerPlugin extends Plugin
 			.panel(panel)
 			.build();
 		clientToolbar.addNavigation(navButton);
-		updateWorldMapping();
+		setWorldMapping();
 	}
 
 	@Subscribe
@@ -99,9 +96,9 @@ public class CropCircleTrackerPlugin extends Plugin
 		}
 	}
 
-	/* Send an HTTP GET request for crop circle likelihoods per world and update the likelihoods property. */
+	/* Send an HTTP GET request for crop circle likelihoods and update the table. */
 	@Schedule(period = GET_LIKELIHOODS_PERIOD_SECONDS, unit = ChronoUnit.SECONDS, asynchronous = true)
-	public void updateLikelihoods()
+	public void getLikelihoods()
 	{
 		// Don't make constant GET requests unless the panel is open.
 		if (panel.open)
@@ -113,7 +110,6 @@ public class CropCircleTrackerPlugin extends Plugin
 				@Override
 				public void onFailure(Call call, IOException e)
 				{
-					likelihoods = null;
 					log.error("GET failed: {}", e.getMessage());
 				}
 				@Override
@@ -123,17 +119,19 @@ public class CropCircleTrackerPlugin extends Plugin
 					{
 						try
 						{
-							likelihoods = gson.fromJson(response.body().string(), JsonObject.class);
+							JsonObject likelihoods = gson.fromJson(response.body().string(), JsonObject.class);
+							SwingUtilities.invokeLater(() -> {
+								panel.likelihoods = likelihoods;
+								panel.updateTable();
+							});
 						}
 						catch (IOException | JsonSyntaxException e)
 						{
-							likelihoods = null;
 							log.error("GET failed: {}", e.getMessage());
 						}
 					}
 					else
 					{
-						likelihoods = null;
 						log.error("GET unsuccessful");
 					}
 					response.close();
@@ -143,7 +141,7 @@ public class CropCircleTrackerPlugin extends Plugin
 	}
 
 	/* Store a mapping of world ID to world. */
-	private void updateWorldMapping()
+	private void setWorldMapping()
 	{
 		WorldResult worldResult = worldService.getWorlds();
 		if (worldResult != null)
@@ -243,15 +241,6 @@ public class CropCircleTrackerPlugin extends Plugin
 			{
 				postSighting(cropCircle);
 			}
-		}
-	}
-
-	@Schedule(period = PANEL_REFRESH_PERIOD_SECONDS, unit = ChronoUnit.SECONDS, asynchronous = true)
-	public void updatePanel()
-	{
-		if (panel.open)
-		{
-			SwingUtilities.invokeLater(() -> panel.updateTable());
 		}
 	}
 }
