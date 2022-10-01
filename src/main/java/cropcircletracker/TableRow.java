@@ -4,6 +4,8 @@ import net.runelite.client.ui.FontManager;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 class TableRow extends JPanel
 {
@@ -11,6 +13,8 @@ class TableRow extends JPanel
 	private final static int COLUMN_2_WIDTH = 50;
 	private final static int COLUMN_3_WIDTH = 100;
 	private final static int COLUMN_HEIGHT = 24;
+
+	private Color lastBackground;
 
 	TableRow(
 			String column1, String column2, String column3,
@@ -26,6 +30,22 @@ class TableRow extends JPanel
 		{
 			setBackground(backgroundColor);
 		}
+
+		addMouseListener(new MouseAdapter()
+		{
+			@Override
+			public void mouseEntered(MouseEvent mouseEvent)
+			{
+				TableRow.this.lastBackground = getBackground();
+				setBackground(getBackground().brighter());
+			}
+
+			@Override
+			public void mouseExited(MouseEvent mouseEvent)
+			{
+				setBackground(lastBackground);
+			}
+		});
 	}
 
 	private void addLabel(String text, Color textColor, int width)

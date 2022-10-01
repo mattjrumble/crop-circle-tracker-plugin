@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Table extends JPanel {
     private static final Color HEADING_COLOR = ColorScheme.SCROLL_TRACK_COLOR;
     private static final Color ROW_COLOR_1 = ColorScheme.DARK_GRAY_COLOR;
-    private static final Color ROW_COLOR_2 = ColorScheme.DARKER_GRAY_COLOR;
+    private static final Color ROW_COLOR_2 = new Color(44, 44, 44);
     private static final Color LIKELIHOOD_COLOR_1 = new Color(0, 255, 0);
     private static final Color LIKELIHOOD_COLOR_2 = new Color(128, 255, 0);
     private static final Color LIKELIHOOD_COLOR_3 = new Color(255, 255, 0);
