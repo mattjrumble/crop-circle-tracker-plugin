@@ -2,11 +2,12 @@ package cropcircletracker;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.sun.jna.platform.unix.solaris.LibKstat;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.ui.components.ComboBoxListRenderer;
+import net.runelite.http.api.worlds.World;
+import net.runelite.http.api.worlds.WorldType;
 
 import javax.inject.Inject;
 import javax.swing.*;
@@ -28,6 +29,13 @@ public class CropCircleTrackerPanel extends PluginPanel
     private static final Color LIKELIHOOD_COLOR_3 = new Color(255, 255, 0);
     private static final Color LIKELIHOOD_COLOR_4 = new Color(255, 128, 0);
     private static final Color LIKELIHOOD_COLOR_5 = new Color(255, 0, 0);
+    private static final Color DANGEROUS_WORLD_TYPE_COLOR = new Color(255, 0, 0);
+    private static final List<WorldType> worldTypesToDisplay = Arrays.asList(
+        WorldType.SKILL_TOTAL, WorldType.HIGH_RISK, WorldType.PVP, WorldType.MEMBERS, WorldType.LAST_MAN_STANDING
+    );
+    private static final List<WorldType> dangerousWorldTypes = Arrays.asList(
+        WorldType.HIGH_RISK, WorldType.PVP
+    );
 
     private final CropCircleTrackerPlugin plugin;
 
@@ -94,7 +102,10 @@ public class CropCircleTrackerPanel extends PluginPanel
 
     private void addTableHeadings()
     {
-        table.add(new CropCircleTrackerTableRow("World", "Likelihood", "Type", null, null, null, TABLE_HEADING_COLOR));
+        table.add(new CropCircleTrackerTableRow(
+            "World", "Likelihood", "World Type",
+            null, null, null, TABLE_HEADING_COLOR
+        ));
     }
 
     /* Repopulate the table based on current likelihoods and the selected location from the dropdown menu. */
@@ -113,14 +124,17 @@ public class CropCircleTrackerPanel extends PluginPanel
             List<List<Object>> worldLikelihoodPairs = new ArrayList<>();
             plugin.likelihoods.keySet().forEach(world ->
             {
-                JsonObject likelihoods = plugin.likelihoods.get(world).getAsJsonObject();
-                JsonElement likelihoodJsonElement = likelihoods.get(String.valueOf(selectedLocation));
-                if (likelihoodJsonElement != null) {
-                    double likelihood = likelihoodJsonElement.getAsDouble();
-                    List<Object> pair = new ArrayList<>();
-                    pair.add(world);
-                    pair.add(likelihood);
-                    worldLikelihoodPairs.add(pair);
+                if (shouldDisplayWorld(Integer.parseInt(world)))
+                {
+                    JsonObject likelihoods = plugin.likelihoods.get(world).getAsJsonObject();
+                    JsonElement likelihoodJsonElement = likelihoods.get(String.valueOf(selectedLocation));
+                    if (likelihoodJsonElement != null) {
+                        double likelihood = likelihoodJsonElement.getAsDouble();
+                        List<Object> pair = new ArrayList<>();
+                        pair.add(world);
+                        pair.add(likelihood);
+                        worldLikelihoodPairs.add(pair);
+                    }
                 }
             });
 
@@ -141,13 +155,33 @@ public class CropCircleTrackerPanel extends PluginPanel
                 Color rowColor = rowIndex.get() % 2 == 0 ? TABLE_ROW_COLOR_1 : TABLE_ROW_COLOR_2;
                 rowIndex.getAndIncrement();
                 table.add(new CropCircleTrackerTableRow(
-                    world, getLikelihoodString(likelihood), "-",
-                    null, getLikelihoodColor(likelihood), null, rowColor
+                    world, getLikelihoodString(likelihood), getWorldTypeString(Integer.parseInt(world)),
+                    null, getLikelihoodColor(likelihood), getWorldTypeColor(Integer.parseInt(world)), rowColor
                 ));
             };
             table.revalidate();
             table.repaint();
         }
+    }
+
+    /*
+    Decide if we should display sightings for the given world. Don't bother displaying sightings for "weird" world
+    types since these are unlikely to be useful for anyone.
+    */
+    private boolean shouldDisplayWorld(int worldID)
+    {
+        World world = plugin.worldMapping.get(worldID);
+        for (WorldType worldType: world.getTypes())
+        {
+            // If the given world has any world types that are not considered "good" then don't display it. Even if
+            // we don't know about the world type (e.g. if a new world type is added after this code has been written),
+            // it's safer to not display worlds than it is to display worlds we know nothing about.
+            if (!worldTypesToDisplay.contains(worldType))
+            {
+                return false;
+            }
+        }
+        return true;
     }
 
     private String getLikelihoodString(double likelihood)
@@ -163,6 +197,32 @@ public class CropCircleTrackerPanel extends PluginPanel
         else
         {
             return Math.round(likelihood * 100) + "%";
+        }
+    }
+
+    private String getWorldTypeString(int worldID)
+    {
+        World world = plugin.worldMapping.get(worldID);
+        EnumSet<WorldType> worldTypes = world.getTypes();
+        if (worldTypes.contains(WorldType.PVP) && worldTypes.contains(WorldType.HIGH_RISK))
+        {
+            return "PvP - High Risk";
+        }
+        else if (worldTypes.contains(WorldType.PVP))
+        {
+            return "PvP";
+        }
+        else if (worldTypes.contains(WorldType.HIGH_RISK))
+        {
+            return "High Risk";
+        }
+        else if (worldTypes.contains(WorldType.SKILL_TOTAL))
+        {
+            return world.getActivity();
+        }
+        else
+        {
+            return "-";
         }
     }
 
@@ -188,6 +248,20 @@ public class CropCircleTrackerPanel extends PluginPanel
         {
             return LIKELIHOOD_COLOR_5;
         }
+    }
+
+    private Color getWorldTypeColor(int worldID)
+    {
+        World world = plugin.worldMapping.get(worldID);
+        EnumSet<WorldType> worldTypes = world.getTypes();
+        for (WorldType dangerousWorldType : dangerousWorldTypes)
+        {
+            if (worldTypes.contains(dangerousWorldType))
+            {
+                return DANGEROUS_WORLD_TYPE_COLOR;
+            }
+        }
+        return null;
     }
 
     public void onActivate()

@@ -22,12 +22,15 @@ import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.GameObjectSpawned;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.game.WorldService;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.task.Schedule;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.util.ImageUtil;
+import net.runelite.http.api.worlds.World;
+import net.runelite.http.api.worlds.WorldResult;
 import okhttp3.*;
 
 import static net.runelite.api.ObjectID.CENTRE_OF_CROP_CIRCLE;
@@ -52,10 +55,15 @@ public class CropCircleTrackerPlugin extends Plugin
 	private ClientToolbar clientToolbar;
 
 	@Inject
+	private WorldService worldService;
+
+	@Inject
 	private OkHttpClient okHttpClient;
 
 	@Inject
 	private Gson gson;
+
+	public Map<Integer, World> worldMapping = new HashMap<>();
 
 	private CropCircleTrackerPanel panel;
 
@@ -78,6 +86,7 @@ public class CropCircleTrackerPlugin extends Plugin
 			.panel(panel)
 			.build();
 		clientToolbar.addNavigation(navButton);
+		getWorldMapping();
 	}
 
 	@Subscribe
@@ -127,6 +136,19 @@ public class CropCircleTrackerPlugin extends Plugin
 				response.close();
 			}
 		});
+	}
+
+	/* Store a mapping of world ID to world. */
+	private void getWorldMapping()
+	{
+		WorldResult worldResult = worldService.getWorlds();
+		if (worldResult != null)
+		{
+			for (World world :  worldResult.getWorlds())
+			{
+				worldMapping.put(world.getId(), world);
+			}
+		}
 	}
 
 	/* Send an HTTP POST request for a crop circle sighting. */
