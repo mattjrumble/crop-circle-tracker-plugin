@@ -42,7 +42,7 @@ public class Table extends JPanel {
 
     private void addHeadingRow()
     {
-        add(new EntryRow("World", "Likelihood", "World Type", null, null, null, HEADING_COLOR));
+        add(new HeadingRow("World", "Likelihood", "World Type", HEADING_COLOR));
     }
 
     private void addMessageRow(String message)
@@ -71,17 +71,24 @@ public class Table extends JPanel {
         });
 
         AtomicInteger rowIndex = new AtomicInteger();
-        for (List<Object> pair: worldLikelihoodPairs)
+        if (worldLikelihoodPairs.size() > 0)
         {
-            int world = Integer.parseInt((String) pair.get(0));
-            double likelihood = (double) pair.get(1);
-            if (shouldDisplayWorld(world))
+            for (List<Object> pair : worldLikelihoodPairs)
             {
-                Color rowColor = rowIndex.get() % 2 == 0 ? ROW_COLOR_1 : ROW_COLOR_2;
-                rowIndex.getAndIncrement();
-                addEntryRow(world, likelihood, rowColor);
+                int world = Integer.parseInt((String) pair.get(0));
+                double likelihood = (double) pair.get(1);
+                if (shouldDisplayWorld(world))
+                {
+                    Color rowColor = rowIndex.get() % 2 == 0 ? ROW_COLOR_1 : ROW_COLOR_2;
+                    rowIndex.getAndIncrement();
+                    addEntryRow(world, likelihood, rowColor);
+                }
             }
-        };
+        }
+        else
+        {
+            addMessageRow("No known crop circles");
+        }
         revalidate();
         repaint();
     }
