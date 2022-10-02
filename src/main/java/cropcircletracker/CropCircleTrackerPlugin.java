@@ -13,14 +13,14 @@ import javax.swing.*;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.Client;
-import net.runelite.api.GameObject;
-import net.runelite.api.GameState;
-import net.runelite.api.Tile;
+import net.runelite.api.*;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.GameObjectSpawned;
 import net.runelite.api.events.GameStateChanged;
+import net.runelite.api.events.WorldChanged;
+import net.runelite.api.widgets.WidgetInfo;
+import net.runelite.client.callback.ClientThread;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.game.WorldService;
 import net.runelite.client.plugins.Plugin;
@@ -29,6 +29,7 @@ import net.runelite.client.task.Schedule;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.util.ImageUtil;
+import net.runelite.client.util.WorldUtil;
 import net.runelite.http.api.worlds.World;
 import net.runelite.http.api.worlds.WorldResult;
 import okhttp3.*;
@@ -48,7 +49,10 @@ public class CropCircleTrackerPlugin extends Plugin
 	private static final Map<WorldPoint, CropCircle> MAPPING = CropCircle.mapping();
 
 	@Inject
-	private Client client;
+	public Client client;
+
+	@Inject
+	private ClientThread clientThread;
 
 	@Inject
 	private ClientToolbar clientToolbar;
@@ -252,5 +256,39 @@ public class CropCircleTrackerPlugin extends Plugin
 				postSighting(cropCircle);
 			}
 		}
+	}
+
+	@Subscribe
+	public void onWorldChanged(WorldChanged event)
+	{
+		SwingUtilities.invokeLater(() -> panel.updateTable());
+	}
+
+	public void hopToWorld(int worldID)
+	{
+		clientThread.invoke(() -> {
+			World world = worldMapping.get(worldID);
+			if (world == null)
+			{
+				return;
+			}
+			final net.runelite.api.World rsWorld = client.createWorld();
+			rsWorld.setActivity(world.getActivity());
+			rsWorld.setAddress(world.getAddress());
+			rsWorld.setId(world.getId());
+			rsWorld.setPlayerCount(world.getPlayers());
+			rsWorld.setLocation(world.getLocation());
+			rsWorld.setTypes(WorldUtil.toWorldTypes(world.getTypes()));
+			if (client.getGameState() == GameState.LOGIN_SCREEN)
+			{
+				client.changeWorld(rsWorld);
+				return;
+			}
+			if (client.getWidget(WidgetInfo.WORLD_SWITCHER_LIST) == null)
+			{
+				client.openWorldHopper();
+			}
+			client.hopToWorld(rsWorld);
+		});
 	}
 }

@@ -14,22 +14,12 @@ public class Table extends JPanel {
     private static final Color HEADING_COLOR = ColorScheme.SCROLL_TRACK_COLOR;
     private static final Color ROW_COLOR_1 = ColorScheme.DARK_GRAY_COLOR;
     private static final Color ROW_COLOR_2 = new Color(44, 44, 44);
-    private static final Color LIKELIHOOD_COLOR_1 = new Color(0, 255, 0);
-    private static final Color LIKELIHOOD_COLOR_2 = new Color(128, 255, 0);
-    private static final Color LIKELIHOOD_COLOR_3 = new Color(255, 255, 0);
-    private static final Color LIKELIHOOD_COLOR_4 = new Color(255, 128, 0);
-    private static final Color LIKELIHOOD_COLOR_5 = new Color(255, 0, 0);
-    private static final Color DANGEROUS_WORLD_TYPE_COLOR = new Color(255, 0, 0);
     private static final List<WorldType> worldTypesToDisplay = Arrays.asList(
             WorldType.SKILL_TOTAL,
             WorldType.HIGH_RISK,
             WorldType.PVP,
             WorldType.MEMBERS,
             WorldType.LAST_MAN_STANDING
-    );
-    private static final List<WorldType> dangerousWorldTypes = Arrays.asList(
-            WorldType.HIGH_RISK,
-            WorldType.PVP
     );
 
     private final CropCircleTrackerPlugin plugin;
@@ -52,10 +42,7 @@ public class Table extends JPanel {
 
     private void addEntryRow(int world, double likelihood, Color rowColor)
     {
-        add(new EntryRow(
-                String.valueOf(world), getLikelihoodString(likelihood), getWorldTypeString(world),
-                null, getLikelihoodColor(likelihood), getWorldTypeColor(world), rowColor
-        ));
+        add(new EntryRow(world, likelihood, rowColor, this.plugin));
     }
 
     public void update(List<List<Object>> worldLikelihoodPairs)
@@ -127,85 +114,5 @@ public class Table extends JPanel {
             }
         }
         return true;
-    }
-
-    private String getLikelihoodString(double likelihood)
-    {
-        if (likelihood >= 0.945)
-        {
-            return "95%+";
-        }
-        else if (likelihood <= 0.01)
-        {
-            return "1%";
-        }
-        else
-        {
-            return Math.round(likelihood * 100) + "%";
-        }
-    }
-
-    private String getWorldTypeString(int worldID)
-    {
-        World world = plugin.worldMapping.get(worldID);
-        EnumSet<WorldType> worldTypes = world.getTypes();
-        if (worldTypes.contains(WorldType.PVP) && worldTypes.contains(WorldType.HIGH_RISK))
-        {
-            return "PvP - High Risk";
-        }
-        else if (worldTypes.contains(WorldType.PVP))
-        {
-            return "PvP";
-        }
-        else if (worldTypes.contains(WorldType.HIGH_RISK))
-        {
-            return "High Risk";
-        }
-        else if (worldTypes.contains(WorldType.SKILL_TOTAL))
-        {
-            return world.getActivity();
-        }
-        else
-        {
-            return "-";
-        }
-    }
-
-    private Color getLikelihoodColor(double likelihood)
-    {
-        if (likelihood >= 0.8)
-        {
-            return LIKELIHOOD_COLOR_1;
-        }
-        else if (likelihood >= 0.6)
-        {
-            return LIKELIHOOD_COLOR_2;
-        }
-        else if (likelihood >= 0.4)
-        {
-            return LIKELIHOOD_COLOR_3;
-        }
-        else if (likelihood >= 0.2)
-        {
-            return LIKELIHOOD_COLOR_4;
-        }
-        else
-        {
-            return LIKELIHOOD_COLOR_5;
-        }
-    }
-
-    private Color getWorldTypeColor(int worldID)
-    {
-        World world = plugin.worldMapping.get(worldID);
-        EnumSet<WorldType> worldTypes = world.getTypes();
-        for (WorldType dangerousWorldType : dangerousWorldTypes)
-        {
-            if (worldTypes.contains(dangerousWorldType))
-            {
-                return DANGEROUS_WORLD_TYPE_COLOR;
-            }
-        }
-        return null;
     }
 }
