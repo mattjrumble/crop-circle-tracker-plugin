@@ -54,7 +54,7 @@ class EntryRow extends JPanel
 			{
 				if (mouseEvent.getClickCount() == 2)
 				{
-					plugin.hopToWorld(world);
+					plugin.worldHopper.scheduleHop(world);
 				}
 			}
 			@Override
