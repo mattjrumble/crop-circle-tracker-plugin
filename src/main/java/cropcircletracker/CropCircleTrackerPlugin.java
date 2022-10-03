@@ -12,6 +12,7 @@ import javax.swing.*;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
+import com.google.inject.Provides;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.api.coords.LocalPoint;
@@ -21,6 +22,7 @@ import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.WorldChanged;
 import net.runelite.client.callback.ClientThread;
+import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.game.WorldService;
 import net.runelite.client.plugins.Plugin;
@@ -46,6 +48,12 @@ public class CropCircleTrackerPlugin extends Plugin
 	private static final String POST_URL = "http://127.0.0.1:8000/";
 	private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
 	private static final Map<WorldPoint, CropCircle> MAPPING = CropCircle.mapping();
+
+	@Inject
+	private CropCircleTrackerConfig config;
+
+	@Inject
+	private ConfigManager configManager;
 
 	@Inject
 	public Client client;
@@ -74,6 +82,12 @@ public class CropCircleTrackerPlugin extends Plugin
 	private CropCircle lastCropCircle = null;
 
 	private int currentWorld = -1;
+
+	@Provides
+	CropCircleTrackerConfig getConfig(ConfigManager configManager)
+	{
+		return configManager.getConfig(CropCircleTrackerConfig.class);
+	}
 
 	@Override
 	public void startUp()
