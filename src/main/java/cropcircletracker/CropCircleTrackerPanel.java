@@ -66,6 +66,7 @@ public class CropCircleTrackerPanel extends PluginPanel
         {
             locationDropdownMenu.addItem(name);
         }
+        locationDropdownMenu.setSelectedItem(plugin.config.defaultLocation().getName());
         locationDropdownMenu.addItemListener(e ->
         {
             if (e.getStateChange() == ItemEvent.SELECTED)

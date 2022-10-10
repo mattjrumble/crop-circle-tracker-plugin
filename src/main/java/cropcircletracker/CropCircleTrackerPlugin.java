@@ -13,6 +13,7 @@ import javax.swing.*;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Provides;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.api.coords.LocalPoint;
@@ -44,13 +45,12 @@ public class CropCircleTrackerPlugin extends Plugin
 	private static final int CROP_CIRCLE_OBJECT = CENTRE_OF_CROP_CIRCLE;
 	private static final int GET_LIKELIHOODS_PERIOD_SECONDS = 5;
 	private static final int CROP_CIRCLE_RECHECK_PERIOD_SECONDS = 10;
-	private static final String GET_URL = "http://127.0.0.1:8000/";
-	private static final String POST_URL = "http://127.0.0.1:8000/";
 	private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
 	private static final Map<WorldPoint, CropCircle> MAPPING = CropCircle.mapping();
 
 	@Inject
-	private CropCircleTrackerConfig config;
+	@Getter
+	public CropCircleTrackerConfig config;
 
 	@Inject
 	private ConfigManager configManager;
@@ -128,7 +128,7 @@ public class CropCircleTrackerPlugin extends Plugin
 		if (panel.open)
 		{
 			log.debug("Getting likelihoods");
-			Request request = new Request.Builder().url(GET_URL).get().build();
+			Request request = new Request.Builder().url(config.getEndpoint()).get().build();
 			okHttpClient.newCall(request).enqueue(new Callback()
 			{
 				@Override
@@ -217,7 +217,7 @@ public class CropCircleTrackerPlugin extends Plugin
 		data.put("location", cropCircle.getIndex());
 		String json = gson.toJson(data);
 		log.debug("Posting sighting: {}", json);
-		Request request = new Request.Builder().url(POST_URL).post(RequestBody.create(JSON, json)).build();
+		Request request = new Request.Builder().url(config.postEndpoint()).post(RequestBody.create(JSON, json)).build();
 		okHttpClient.newCall(request).enqueue(new Callback()
 		{
 			@Override

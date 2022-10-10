@@ -10,8 +10,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public enum CropCircle
 {
-    // Order locations alphabetically just so that the defaultLocation config dropdown is in alphabetical order.
-    // There's probably a better solution to this problem.
+    // I'd prefer having these ordered by index, but they're ordered alphabetically so that the defaultLocation config
+    // dropdown is in alphabetical order. There's probably a better solution to this problem.
     BRIMHAVEN(11, "Brimhaven", new WorldPoint(2808, 3200, 0)),
     CATHERBY(9, "Catherby", new WorldPoint(2819, 3470, 0)),
     DORICS_HOUSE(0, "Doric's House", new WorldPoint(2953, 3444, 0)),

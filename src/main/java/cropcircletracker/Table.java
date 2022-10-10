@@ -64,7 +64,7 @@ public class Table extends JPanel {
             {
                 int world = Integer.parseInt((String) pair.get(0));
                 double likelihood = (double) pair.get(1);
-                if (shouldDisplayWorld(world))
+                if (shouldDisplay(world, likelihood))
                 {
                     Color rowColor = rowIndex.get() % 2 == 0 ? ROW_COLOR_1 : ROW_COLOR_2;
                     rowIndex.getAndIncrement();
@@ -96,14 +96,20 @@ public class Table extends JPanel {
         repaint();
     }
 
-    /*
-    Decide if we should display sightings for the given world. Don't bother displaying sightings for "weird" world
-    types since these are unlikely to be useful for anyone.
-    */
-    private boolean shouldDisplayWorld(int worldID)
+    /* Decide if we should display a row for the given world and likelihood. */
+    private boolean shouldDisplay(int worldID, double likelihood)
     {
+        if (likelihood < plugin.config.minimumLikelihood() / 100d)
+        {
+            return false;
+        }
         World world = plugin.worldMapping.get(worldID);
-        for (WorldType worldType: world.getTypes())
+        if (world == null)
+        {
+            return false;
+        }
+        EnumSet<WorldType> worldTypes = world.getTypes();
+        for (WorldType worldType: worldTypes)
         {
             // If the given world has any world types that are not considered "good" then don't display it. Even if
             // we don't know about the world type (e.g. if a new world type is added after this code has been written),
@@ -111,6 +117,44 @@ public class Table extends JPanel {
             if (!worldTypesToDisplay.contains(worldType))
             {
                 return false;
+            }
+        }
+        if (worldTypes.contains(WorldType.PVP) && !plugin.config.showPVPWorlds())
+        {
+            return false;
+        }
+        if (worldTypes.contains(WorldType.HIGH_RISK) && !plugin.config.showHighRiskWorlds())
+        {
+            return false;
+        }
+        if (worldTypes.contains(WorldType.SKILL_TOTAL))
+        {
+            switch (world.getActivity()) {
+                case "1250 skill total":
+                    if (!plugin.config.show1250TotalWorlds()) {
+                        return false;
+                    }
+                    break;
+                case "1500 skill total":
+                    if (!plugin.config.show1500TotalWorlds()) {
+                        return false;
+                    }
+                    break;
+                case "1750 skill total":
+                    if (!plugin.config.show1750TotalWorlds()) {
+                        return false;
+                    }
+                    break;
+                case "2000 skill total":
+                    if (!plugin.config.show2000TotalWorlds()) {
+                        return false;
+                    }
+                    break;
+                case "2200 skill total":
+                    if (!plugin.config.show2200TotalWorlds()) {
+                        return false;
+                    }
+                    break;
             }
         }
         return true;
