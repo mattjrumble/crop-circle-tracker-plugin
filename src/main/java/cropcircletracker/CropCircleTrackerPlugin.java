@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
 import javax.inject.Inject;
 import javax.swing.*;
 
@@ -127,21 +128,11 @@ public class CropCircleTrackerPlugin extends Plugin
 		// Don't make constant GET requests unless the panel is open.
 		if (panel.open)
 		{
-			log.debug("Getting likelihoods");
-			Request request = new Request.Builder().url(config.getEndpoint()).get().build();
-			okHttpClient.newCall(request).enqueue(new Callback()
-			{
-				@Override
-				public void onFailure(Call call, IOException e)
-				{
-					log.error("GET failed: {}", e.getMessage());
-					SwingUtilities.invokeLater(() -> panel.displayError("Server unavailable"));
-				}
-				@Override
-				public void onResponse(Call call, Response response)
-				{
-					if (response.isSuccessful())
-					{
+			makeRequest(
+					"GET",
+					config.getEndpoint(),
+					null,
+					(call, response) -> {
 						try
 						{
 							JsonObject likelihoods = gson.fromJson(response.body().string(), JsonObject.class);
@@ -154,15 +145,21 @@ public class CropCircleTrackerPlugin extends Plugin
 						{
 							log.error("GET failed: {}", e.getMessage());
 						}
-					}
-					else
-					{
-						log.error("GET unsuccessful");
-						SwingUtilities.invokeLater(() -> panel.displayError("Server error"));
-					}
-					response.close();
-				}
-			});
+					},
+					(call, response) -> {
+						String errorMessage;
+						if (response.code() == 401)
+						{
+							errorMessage = "Server authentication error";
+						}
+						else
+						{
+							errorMessage = "Server error";
+						}
+						SwingUtilities.invokeLater(() -> panel.displayError(errorMessage));
+					},
+					(call, e) -> SwingUtilities.invokeLater(() -> panel.displayError("Server unavailable"))
+			);
 		}
 	}
 
@@ -215,27 +212,64 @@ public class CropCircleTrackerPlugin extends Plugin
 		Map<String, Object> data = new HashMap<>();
 		data.put("world", world);
 		data.put("location", cropCircle.getIndex());
-		String json = gson.toJson(data);
-		log.debug("Posting sighting: {}", json);
-		Request request = new Request.Builder().url(config.postEndpoint()).post(RequestBody.create(JSON, json)).build();
-		okHttpClient.newCall(request).enqueue(new Callback()
-		{
-			@Override
-			public void onFailure(Call call, IOException e)
-			{
-				log.error("POST failed: {}", e.getMessage());
-			}
-			@Override
-			public void onResponse(Call call, Response response)
-			{
-				if (!response.isSuccessful())
-				{
-					log.error("POST unsuccessful");
-				}
-				response.close();
-			}
-		});
+		makeRequest(
+				"POST",
+				config.postEndpoint(),
+				RequestBody.create(JSON, gson.toJson(data)),
+				(call, response) -> {},
+				(call, response) -> {},
+				(call, e) -> {}
+		);
 		lastCropCircle = cropCircle;
+	}
+
+	private void makeRequest(
+			String method, String url, RequestBody body, BiConsumer<Call, Response> onSuccessfulResponse,
+			BiConsumer<Call, Response> onUnsuccessfulResponse, BiConsumer<Call, Exception> onFailure
+	)
+	{
+		log.debug("Making {} request to {} with body {}", method, url, body);
+		Request request = null;
+		try
+		{
+			request = new Request.Builder()
+					.url(url)
+					.addHeader("Authorization", "Bearer " + config.sharedKey())
+					.method(method, body)
+					.build();
+		}
+		catch (IllegalArgumentException e)
+		{
+			log.error("Invalid URL: {}", e.getMessage());
+			SwingUtilities.invokeLater(() -> panel.displayError("Invalid " + method + " endpoint"));
+		}
+		if (request != null)
+		{
+			okHttpClient.newCall(request).enqueue(new Callback()
+				{
+					@Override
+					public void onResponse(Call call, Response response)
+					{
+						if (response.isSuccessful())
+						{
+							onSuccessfulResponse.accept(call, response);
+						}
+						else
+						{
+							log.error("{} unsuccessful: {}", method, response.message());
+							onUnsuccessfulResponse.accept(call, response);
+						}
+						response.close();
+					}
+					@Override
+					public void onFailure(Call call, IOException e)
+					{
+						log.error("{} failed: {}", method, e.getMessage());
+						onFailure.accept(call, e);
+					}
+				}
+			);
+		}
 	}
 
 	/* Determine if a crop circle is visible on the given WorldPoint. */
