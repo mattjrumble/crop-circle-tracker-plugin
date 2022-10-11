@@ -44,7 +44,7 @@ import static net.runelite.api.ObjectID.CENTRE_OF_CROP_CIRCLE;
 public class CropCircleTrackerPlugin extends Plugin
 {
 	private static final int CROP_CIRCLE_OBJECT = CENTRE_OF_CROP_CIRCLE;
-	private static final int GET_LIKELIHOODS_PERIOD_SECONDS = 5;
+	private static final int GET_LIKELIHOODS_PERIOD_SECONDS = 10;
 	private static final int CROP_CIRCLE_RECHECK_PERIOD_SECONDS = 10;
 	private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
 	private static final Map<WorldPoint, CropCircle> MAPPING = CropCircle.mapping();
