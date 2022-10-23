@@ -152,6 +152,10 @@ public class CropCircleTrackerPlugin extends Plugin
 						{
 							errorMessage = "Server authentication error";
 						}
+						else if (response.code() == 503)
+						{
+							errorMessage = "Server temporarily unavailable";
+						}
 						else
 						{
 							errorMessage = "Server error";
