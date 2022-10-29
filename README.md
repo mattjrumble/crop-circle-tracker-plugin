@@ -8,4 +8,4 @@ for area-locked/snowflake accounts.
 
 ### Scouting
 
-The best way to scout crop circle locations is using the Wandering Impling in Zanaris. Just hop through worlds and use the Wandering Impling each time, and the plugin will detect the crop circle and send that information to the backend server. Multiple sightings on the same world help to narrow down the timings and make the plugin more accurate. The default backend server resets sightings every Wednesday at 11:30AM UK time (to match the weekly game update).
+The best way to scout crop circle locations is using the Wandering Impling in Zanaris. Just hop through worlds and use the Wandering Impling each time, and the plugin will detect the crop circle and send that information to the backend server. Multiple sightings on the same world help to narrow down the timings and make the plugin more accurate. The default backend server resets sightings every Wednesday at 11:30AM UK time (to match the weekly game update - which resets all the crop circles). So I wouldn't bother scouting on Wednesday morning.
