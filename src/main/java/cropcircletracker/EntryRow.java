@@ -28,6 +28,7 @@ class EntryRow extends JPanel
 	private static final Color LIKELIHOOD_COLOR_5 = new Color(255, 0, 0);
 	private static final Color DANGEROUS_WORLD_TYPE_COLOR = new Color(255, 0, 0);
 	private static final List<WorldType> dangerousWorldTypes = Arrays.asList(
+			WorldType.BOUNTY,
 			WorldType.HIGH_RISK,
 			WorldType.PVP
 	);
@@ -102,6 +103,10 @@ class EntryRow extends JPanel
 		else if (worldTypes.contains(WorldType.HIGH_RISK))
 		{
 			return "High Risk";
+		}
+		else if (worldTypes.contains(WorldType.BOUNTY))
+		{
+			return "Target World";
 		}
 		else if (worldTypes.contains(WorldType.SKILL_TOTAL))
 		{

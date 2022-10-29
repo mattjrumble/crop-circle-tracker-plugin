@@ -15,11 +15,12 @@ public class Table extends JPanel {
     private static final Color ROW_COLOR_1 = ColorScheme.DARK_GRAY_COLOR;
     private static final Color ROW_COLOR_2 = new Color(44, 44, 44);
     private static final List<WorldType> worldTypesToDisplay = Arrays.asList(
-            WorldType.SKILL_TOTAL,
+            WorldType.BOUNTY,
             WorldType.HIGH_RISK,
-            WorldType.PVP,
+            WorldType.LAST_MAN_STANDING,
             WorldType.MEMBERS,
-            WorldType.LAST_MAN_STANDING
+            WorldType.PVP,
+            WorldType.SKILL_TOTAL
     );
 
     private final CropCircleTrackerPlugin plugin;
