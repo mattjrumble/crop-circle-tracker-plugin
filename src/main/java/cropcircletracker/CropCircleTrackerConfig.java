@@ -70,13 +70,13 @@ public interface CropCircleTrackerConfig extends Config {
     @ConfigItem(position = 1, keyName = "getEndpoint", name = "GET endpoint", description = "HTTP endpoint to get sighting information from.", section = endpointsSection)
     default String getEndpoint()
     {
-        return "https://cropcircletracker.com";
+        return "https://cropcircletracker.com/get/";
     }
 
     @ConfigItem(position = 2, keyName = "postEndpoint", name = "POST endpoint", description = "HTTP endpoint to post sightings to.", section = endpointsSection)
     default String postEndpoint()
     {
-        return "https://cropcircletracker.com";
+        return "https://cropcircletracker.com/post/";
     }
 
     @ConfigItem(position = 3, keyName = "sharedKey", name = "Shared key", description = "A shared key used to authenticate with the server.", section = endpointsSection)
