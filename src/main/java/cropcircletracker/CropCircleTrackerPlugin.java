@@ -78,6 +78,8 @@ public class CropCircleTrackerPlugin extends Plugin
 
 	public WorldHopper worldHopper = new WorldHopper(this);
 
+	private NavigationButton navButton = null;
+
 	private CropCircleTrackerPanel panel;
 
 	private CropCircle lastCropCircle = null;
@@ -91,11 +93,11 @@ public class CropCircleTrackerPlugin extends Plugin
 	}
 
 	@Override
-	public void startUp()
+	protected void startUp() throws Exception
 	{
 		panel = injector.getInstance(CropCircleTrackerPanel.class);
 		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "/icon.png");
-		NavigationButton navButton = NavigationButton.builder()
+		navButton = NavigationButton.builder()
 			.tooltip("Crop Circle Tracker")
 			.icon(icon)
 			.priority(7)
@@ -103,6 +105,12 @@ public class CropCircleTrackerPlugin extends Plugin
 			.build();
 		clientToolbar.addNavigation(navButton);
 		setWorldMapping();
+	}
+	
+	@Override
+	protected void shutDown() throws Exception
+	{
+		clientToolbar.removeNavigation(navButton);
 	}
 
 	@Subscribe
