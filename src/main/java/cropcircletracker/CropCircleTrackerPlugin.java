@@ -26,9 +26,11 @@ import net.runelite.api.events.WorldChanged;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.game.WorldService;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.plugins.worldhopper.WorldHopperConfig;
 import net.runelite.client.task.Schedule;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
@@ -103,7 +105,10 @@ public class CropCircleTrackerPlugin extends Plugin
 			.priority(7)
 			.panel(panel)
 			.build();
-		clientToolbar.addNavigation(navButton);
+		if (!config.hideToolbarButton())
+		{
+			clientToolbar.addNavigation(navButton);
+		}
 		setWorldMapping();
 	}
 	
@@ -111,6 +116,25 @@ public class CropCircleTrackerPlugin extends Plugin
 	protected void shutDown() throws Exception
 	{
 		clientToolbar.removeNavigation(navButton);
+	}
+
+	@Subscribe
+	public void onConfigChanged(final ConfigChanged event)
+	{
+		if (event.getGroup().equals(CropCircleTrackerConfig.GROUP))
+		{
+			if (event.getKey().equals(CropCircleTrackerConfig.HIDE_TOOLBAR_BUTTON_NAME))
+			{
+				if (config.hideToolbarButton())
+				{
+					clientToolbar.removeNavigation(navButton);
+				}
+				else
+				{
+					clientToolbar.addNavigation(navButton);
+				}
+			}
+		}
 	}
 
 	@Subscribe

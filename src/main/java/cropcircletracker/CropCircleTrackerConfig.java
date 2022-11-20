@@ -5,8 +5,11 @@ import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.ConfigSection;
 
-@ConfigGroup("cropcircletracker")
+@ConfigGroup(CropCircleTrackerConfig.GROUP)
 public interface CropCircleTrackerConfig extends Config {
+    String GROUP = "cropcircletracker";
+    String HIDE_TOOLBAR_BUTTON_NAME = "hideToolbarButton";
+
     @ConfigSection(position = 10, name = "World Types", description = "Settings for displaying different world types.")
     String worldTypeSection = "World Types";
 
@@ -23,6 +26,12 @@ public interface CropCircleTrackerConfig extends Config {
     default int minimumLikelihood()
     {
         return 0;
+    }
+
+    @ConfigItem(position = 3, keyName = HIDE_TOOLBAR_BUTTON_NAME, name = "Hide toolbar button", description = "Hide the toolbar button for this plugin. Use this if you want to contribute to crowdsourcing but don't care about the sightings yourself.")
+    default boolean hideToolbarButton()
+    {
+        return false;
     }
 
     @ConfigItem(position = 1, keyName = "showPVPWorlds", name = "Show PVP worlds", description = "Show PvP worlds in the table.", section = worldTypeSection)
