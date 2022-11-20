@@ -6,6 +6,8 @@ sightings to calculate the location of crop circles in different worlds. The plu
 server and displays them in a panel so users can quick-hop to a world where a crop circle is present. Mainly useful
 for area-locked/snowflake accounts or for getting the Farmer's Affinity speed boost in Puro-Puro.
 
+![screenshot](images/screenshot.png)
+
 ### Scouting
 
 The best way to scout crop circle locations is using the Wandering Impling in Zanaris. Just hop through worlds and use
