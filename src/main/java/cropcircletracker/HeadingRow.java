@@ -33,6 +33,8 @@ class HeadingRow extends JPanel
 		JLabel label = new JLabel(text);
 		label.setFont(FontManager.getRunescapeFont());
 		label.setPreferredSize(new Dimension(width, COLUMN_HEIGHT));
+		label.setMaximumSize(new Dimension(width, COLUMN_HEIGHT));
+		label.setMinimumSize(new Dimension(width, COLUMN_HEIGHT));
 		label.setHorizontalAlignment(SwingConstants.CENTER);
 		add(label, constraints(1, GridBagConstraints.BOTH));
 	}
