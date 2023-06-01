@@ -135,6 +135,12 @@ public class CropCircleTrackerPanel extends PluginPanel
         table.displayError(errorMessage);
     }
 
+    public void displayErrors(List<String> errorMessages)
+    {
+        likelihoods = null;
+        table.displayErrors(errorMessages);
+    }
+
     public void onActivate()
     {
         clearTable();

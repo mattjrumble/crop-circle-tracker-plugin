@@ -97,6 +97,17 @@ public class Table extends JPanel {
         repaint();
     }
 
+    public void displayErrors(List<String> errorMessages)
+    {
+        removeAll();
+        for (String errorMessage: errorMessages)
+        {
+            addMessageRow(errorMessage);
+        }
+        revalidate();
+        repaint();
+    }
+
     /* Decide if we should display a row for the given world and likelihood. */
     private boolean shouldDisplay(int worldID, double likelihood)
     {

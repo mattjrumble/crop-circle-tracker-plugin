@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -178,20 +179,27 @@ public class CropCircleTrackerPlugin extends Plugin
 						}
 					},
 					(call, response) -> {
-						String errorMessage;
 						if (response.code() == 401)
 						{
-							errorMessage = "Server authentication error";
+							SwingUtilities.invokeLater(() -> panel.displayError("Server authentication error"));
 						}
 						else if (response.code() == 503)
 						{
-							errorMessage = "Server temporarily unavailable";
+							SwingUtilities.invokeLater(() -> panel.displayErrors(
+									Arrays.asList(
+											"Server temporarily unavailable.",
+											"The server goes offline every Wednesday",
+											"between 11:00 and 12:00 UK time to match",
+											"the weekly game update. If you're seeing",
+											"this message outside that time, something",
+											"has gone wrong."
+									)
+							));
 						}
 						else
 						{
-							errorMessage = "Server error";
+							SwingUtilities.invokeLater(() -> panel.displayError("Server error"));
 						}
-						SwingUtilities.invokeLater(() -> panel.displayError(errorMessage));
 					},
 					(call, e) -> SwingUtilities.invokeLater(() -> panel.displayError("Server unavailable"))
 			);
