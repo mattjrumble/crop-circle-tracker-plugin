@@ -5,7 +5,7 @@ import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
-import net.runelite.client.ui.components.ComboBoxListRenderer;
+import net.runelite.client.ui.components.TitleCaseListCellRenderer;
 
 import javax.inject.Inject;
 import javax.swing.*;
@@ -52,7 +52,7 @@ public class CropCircleTrackerPanel extends PluginPanel
     private void addLocationDropdownMenu()
     {
         locationDropdownMenu = new JComboBox<>();
-        locationDropdownMenu.setRenderer(new ComboBoxListRenderer<>());
+        locationDropdownMenu.setRenderer(new TitleCaseListCellRenderer());
         locationDropdownMenu.setFocusable(false);
         locationDropdownMenu.setForeground(Color.WHITE);
         locationDropdownMenu.setMaximumRowCount(CropCircle.values().length);
