@@ -1,7 +1,7 @@
 package cropcircletracker;
 
 import net.runelite.api.GameState;
-import net.runelite.api.widgets.WidgetInfo;
+import net.runelite.api.widgets.ComponentID;
 import net.runelite.client.util.WorldUtil;
 import net.runelite.http.api.worlds.World;
 
@@ -57,7 +57,7 @@ public class WorldHopper
         {
             return;
         }
-        if (plugin.client.getWidget(WidgetInfo.WORLD_SWITCHER_LIST) == null)
+        if (plugin.client.getWidget(ComponentID.WORLD_SWITCHER_WORLD_LIST) == null)
         {
             plugin.client.openWorldHopper();
 
