@@ -46,7 +46,6 @@ public interface CropCircleTrackerConfig extends Config {
         return true;
     }
 
-
     @ConfigItem(position = 3, keyName = "show1250TotalWorlds", name = "Show 1250 total worlds", description = "Show 1250 total worlds in the table.", section = worldTypeSection)
     default boolean show1250TotalWorlds()
     {
