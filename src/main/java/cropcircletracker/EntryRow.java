@@ -112,6 +112,10 @@ class EntryRow extends JPanel
 		{
 			return world.getActivity();
 		}
+		else if (worldTypes.contains(WorldType.SEASONAL))
+		{
+			return world.getActivity();
+		}
 		else
 		{
 			return "-";

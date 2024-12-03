@@ -46,6 +46,7 @@ public interface CropCircleTrackerConfig extends Config {
         return true;
     }
 
+
     @ConfigItem(position = 3, keyName = "show1250TotalWorlds", name = "Show 1250 total worlds", description = "Show 1250 total worlds in the table.", section = worldTypeSection)
     default boolean show1250TotalWorlds()
     {
@@ -72,6 +73,12 @@ public interface CropCircleTrackerConfig extends Config {
 
     @ConfigItem(position = 7, keyName = "show2200TotalWorlds", name = "Show 2200 total worlds", description = "Show 2200 total worlds in the table.", section = worldTypeSection)
     default boolean show2200TotalWorlds()
+    {
+        return true;
+    }
+
+    @ConfigItem(position = 8, keyName = "showSeasonalWorlds", name = "Show Seasonal/League worlds", description = "Show Seasonal/League worlds in the table.", section = worldTypeSection)
+    default boolean showSeasonalWorlds()
     {
         return true;
     }
