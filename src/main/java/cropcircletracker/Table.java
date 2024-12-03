@@ -20,7 +20,8 @@ public class Table extends JPanel {
             WorldType.LAST_MAN_STANDING,
             WorldType.MEMBERS,
             WorldType.PVP,
-            WorldType.SKILL_TOTAL
+            WorldType.SKILL_TOTAL,
+            WorldType.SEASONAL
     );
 
     private final CropCircleTrackerPlugin plugin;
@@ -136,6 +137,10 @@ public class Table extends JPanel {
             return false;
         }
         if (worldTypes.contains(WorldType.HIGH_RISK) && !plugin.config.showHighRiskWorlds())
+        {
+            return false;
+        }
+        if (worldTypes.contains(WorldType.SEASONAL) && !plugin.config.showSeasonalWorlds())
         {
             return false;
         }

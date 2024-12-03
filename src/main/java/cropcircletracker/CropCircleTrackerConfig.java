@@ -76,6 +76,12 @@ public interface CropCircleTrackerConfig extends Config {
         return true;
     }
 
+    @ConfigItem(position = 8, keyName = "showSeasonalWorlds", name = "Show Seasonal/League worlds", description = "Show Seasonal/League worlds in the table.", section = worldTypeSection)
+    default boolean showSeasonalWorlds()
+    {
+        return true;
+    }
+
     @ConfigItem(position = 1, keyName = "getEndpoint", name = "GET endpoint", description = "HTTP endpoint to get sighting information from.", section = endpointsSection)
     default String getEndpoint()
     {
