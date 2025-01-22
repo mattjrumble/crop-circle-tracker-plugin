@@ -256,7 +256,7 @@ public class CropCircleTrackerPlugin extends Plugin
 
 		Map<String, Object> data = new HashMap<>();
 		data.put("world", world);
-		data.put("location", cropCircle.getIndex());
+		data.put("location", cropCircle.getName());
 		makeRequest(
 				"POST",
 				config.postEndpoint(),
