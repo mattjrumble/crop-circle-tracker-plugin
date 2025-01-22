@@ -188,11 +188,13 @@ public class CropCircleTrackerPlugin extends Plugin
 							SwingUtilities.invokeLater(() -> panel.displayErrors(
 									Arrays.asList(
 											"Server temporarily unavailable.",
-											"The server goes offline every Wednesday",
-											"between 11:00 and 12:00 UK time to match",
-											"the weekly game update. If you're seeing",
-											"this message outside that time, something",
-											"has gone wrong."
+											"The server goes offline every ",
+											"Wednesday between 11:00 and ",
+											"12:00 UK time to match the ",
+											"weekly game update. If you're",
+											"seeing this message outside ",
+											"that time, something has ",
+											"gone wrong."
 									)
 							));
 						}
