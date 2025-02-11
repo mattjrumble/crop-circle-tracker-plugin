@@ -93,30 +93,20 @@ public class CropCircleTrackerPanel extends PluginPanel
     {
         if (this.likelihoods != null)
         {
-            String selectedLocationName = String.valueOf(locationDropdownMenu.getSelectedItem());
-            CropCircle cropCircle = CropCircle.fromName(selectedLocationName);
+            String selectedLocation = String.valueOf(locationDropdownMenu.getSelectedItem());
+            CropCircle cropCircle = CropCircle.fromName(selectedLocation);
             if (cropCircle == null)
             {
                 log.error("Invalid location selected");
                 return;
             }
-            String selectedLocationNumber = String.valueOf(cropCircle.getIndex());
 
             // Get worlds and likelihoods for the selected location.
             List<List<Object>> worldLikelihoodPairs = new ArrayList<>();
             this.likelihoods.keySet().forEach(world ->
             {
                 JsonObject likelihoodsForWorld = this.likelihoods.get(world).getAsJsonObject();
-
-                // Accept locations from the server as both location names (e.g. "Gwenith") or
-                // location numbers (e.g. "8")
-                JsonElement likelihoodJsonElement = null;
-                if (likelihoodsForWorld.keySet().contains(selectedLocationName)){
-                    likelihoodJsonElement = likelihoodsForWorld.get(selectedLocationName);
-                } else if (likelihoodsForWorld.keySet().contains(selectedLocationNumber)) {
-                    likelihoodJsonElement = likelihoodsForWorld.get(selectedLocationNumber);
-                }
-
+                JsonElement likelihoodJsonElement = likelihoodsForWorld.get(selectedLocation);
                 if (likelihoodJsonElement != null)
                 {
                     double likelihood = likelihoodJsonElement.getAsDouble();
