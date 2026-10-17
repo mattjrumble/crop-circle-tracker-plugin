@@ -35,7 +35,7 @@ public class WorldHopper
             rsWorld.setAddress(world.getAddress());
             rsWorld.setId(world.getId());
             rsWorld.setPlayerCount(world.getPlayers());
-            rsWorld.setLocation(world.getLocation());
+            rsWorld.setLocation(world.getRegion().getId());
             rsWorld.setTypes(WorldUtil.toWorldTypes(world.getTypes()));
             if (plugin.client.getGameState() == GameState.LOGIN_SCREEN)
             {
